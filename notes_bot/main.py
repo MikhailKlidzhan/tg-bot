@@ -3,8 +3,8 @@ from telegram.ext import ApplicationBuilder
 from dotenv import load_dotenv
 import os
 
-from notes_bot.handlers.start import setup_handlers_onstart, post_init
-from notes_bot.handlers.notes import setup_handlers
+from handlers.start import setup_handlers_onstart, post_init
+from handlers.notes import setup_handlers
 
 load_dotenv()
 BOT_TOKEN = os.getenv('BOT_TOKEN')

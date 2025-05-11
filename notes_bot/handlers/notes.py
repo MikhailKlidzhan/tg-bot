@@ -1,6 +1,6 @@
 from telegram import Update
 from telegram.ext import ContextTypes, CommandHandler, MessageHandler, filters
-from notes_bot.models.note import Note
+from models.note import Note
 
 # CREATE: /newnote <title> <content>
 async def new_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -25,8 +25,8 @@ async def my_notes(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("You have no notes yet.")
         return
 
-    response = "📝 Your Notes:\n" + "\n".join(
-        f"{note.id}: {note.title}" for note in notes
+    response = "📝 Your Notes:\n" + "".join(
+        f"{note.id}: {note.title} \n{note.content}" for note in notes
     )
     await update.message.reply_text(response)
 

@@ -23,7 +23,7 @@ async def greet(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def post_init(app):
     commands = [
         BotCommand("start", "Start the bot"),
-        BotCommand("hello_world", "Hello world!"),
+        BotCommand("helloworld", "Hello world!"),
         BotCommand("newnote", "Create a new note"),
         BotCommand("mynotes", "Show your notes"),
         BotCommand("editnote", "Edit your notes by id"),
