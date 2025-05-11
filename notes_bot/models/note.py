@@ -18,14 +18,17 @@ db = PostgresqlDatabase(
     host=DB_HOST,
 )
 
-class Test(Model):
-    name = CharField()
-    pupp = CharField()
+# creating a model for a single note
+class Note(Model):
+    user_id = IntegerField()
+    title = CharField(max_length=100)
+    content = TextField()
+    created_at = DateTimeField(default=datetime.now)
 
     class Meta:
         database = db
-        table_name = 'pupps'
 
+# create table in db
 db.connect()
-db.create_tables([Test])
+db.create_tables([Note], safe=True)
 
