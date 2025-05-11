@@ -67,4 +67,10 @@ async def delete_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Note not found or not yours. Oops.")
 
 
+# Register handlers
+def setup_handlers(app):
+    app.add_handler(CommandHandler("newnote", new_note))
+    app.add_handler(CommandHandler("mynotes", my_notes))
+    app.add_handler(CommandHandler("editnote", edit_note))
+    app.add_handler(CommandHandler("deletenote", delete_note))
 
