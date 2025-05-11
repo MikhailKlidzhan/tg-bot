@@ -51,4 +51,20 @@ async def edit_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Note not found or not yours. Oops.")
 
 
+# DELETE: /deletenote <id>
+async def delete_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    if not context.args:
+        await update.message.reply_text("Usage: /deletenote <note_id>")
+        return
+
+    note_id = context.args[0]
+    try:
+        note = Note.get((Note.user_id == user_id) & (Note.id == note_id))
+        note.delete_instance()
+        await update.message.reply_text(f"Deleted note: {note.title}")
+    except Note.DoesNotExist:
+        await update.message.reply_text("Note not found or not yours. Oops.")
+
+
 
