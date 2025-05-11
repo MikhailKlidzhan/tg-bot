@@ -2,19 +2,53 @@ from telegram import Update
 from telegram.ext import ContextTypes, CommandHandler, MessageHandler, filters
 from notes_bot.models.note import Note
 
-# CREATE: /new_note <title> <content>
+# CREATE: /newnote <title> <content>
 async def new_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     args = context.args
 
     if len(args) < 2:
-        await update.message.reply_text("Usage: /new_note <titel> <content>")
+        await update.message.reply_text("Usage: /new_note <title> <content>")
         return
 
     title, content = args[0], " ".join(args[1:])
     Note.create(user_id=user_id, title=title, content=content)
     await update.message.reply_text(f"✅ Note saved: '{title}'")
 
+
+# READ: /mynotes
+async def my_notes(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    notes = Note.select().where(Note.user_id == user_id)
+
+    if not notes:
+        await update.message.reply_text("You have no notes yet.")
+        return
+
+    response = "📝 Your Notes:\n" + "\n".join(
+        f"{note.id}: {note.title}" for note in notes
+    )
+    await update.message.reply_text(response)
+
+
+# UPDATE: /editnote <id> <new_content>
+async def edit_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    args = context.args
+
+    if len(args) < 2:
+        await update.message.reply_text("Usage: /editnote <note_id> <new_content>")
+        return
+
+    note_id, new_content = args[0], " ".join(args[1:])
+
+    try:
+        note = Note.get((Note.user_id == user_id) & (Note.id == note_id))
+        note.content = new_content
+        note.save()
+        await update.message.reply_text(f"Updated note {note.title}")
+    except Note.DoesNotExist:
+        await update.message.reply_text("Note not found or not yours. Oops.")
 
 
 
