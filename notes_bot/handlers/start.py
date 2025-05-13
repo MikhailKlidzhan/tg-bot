@@ -1,9 +1,16 @@
-from telegram import Update, BotCommand
-from telegram.ext import ContextTypes, CommandHandler, MessageHandler, filters
+from telegram import Update, BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ContextTypes, CommandHandler, MessageHandler, filters, CallbackQueryHandler
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a BibleNotes bot!")
+    # await context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a BibleNotes bot!")
+    keyboard = [
+        InlineKeyboardButton("Christian", callback_data="religion_christian"),
+        InlineKeyboardButton("Muslim", callback_data="religion_muslim"),
+        InlineKeyboardButton("Atheist", callback_data="religion_atheist"),
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text("Choose your religion:", reply_markup=reply_markup)
 
 
 async def hello_world(update: Update, context: ContextTypes.DEFAULT_TYPE):
