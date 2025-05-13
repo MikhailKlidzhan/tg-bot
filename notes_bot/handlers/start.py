@@ -4,13 +4,19 @@ from telegram.ext import ContextTypes, CommandHandler, MessageHandler, filters, 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # await context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a BibleNotes bot!")
-    keyboard = [
-        InlineKeyboardButton("Christian", callback_data="religion_christian"),
-        InlineKeyboardButton("Muslim", callback_data="religion_muslim"),
-        InlineKeyboardButton("Atheist", callback_data="religion_atheist"),
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("Choose your religion:", reply_markup=reply_markup)
+    if "religion" in context.user_data:
+        await update.message.reply_text(f"You chose your religion, it's '{context.user_data['religion'].capitalize()}'. Choose other commands from the menu.")
+
+    else :
+        keyboard = [
+
+                [InlineKeyboardButton("Christian", callback_data="religion_christian"),],
+                [InlineKeyboardButton("Muslim", callback_data="religion_muslim"),],
+                [InlineKeyboardButton("Atheist", callback_data="religion_atheist"),],
+
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await update.message.reply_text("Choose your religion:", reply_markup=reply_markup)
 
 
 async def handle_religion_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
