@@ -3,6 +3,10 @@ from telegram.ext import ContextTypes, CommandHandler, MessageHandler, filters, 
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Starts the bot, gives a user choice of religion.
+    Based on the choice certain passages will be attached to the notes.
+    """
     # await context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a BibleNotes bot!")
     if "religion" in context.user_data:
         await update.message.reply_text(f"You chose your religion, it's '{context.user_data['religion'].capitalize()}'. Choose other commands from the menu.")
@@ -20,10 +24,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def handle_religion_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Handles the religion choice.
+    Sets up a religion to context.user_data if 'christian' or 'muslim' is chosen.
+    If 'atheist' is chosen, shows a 'sorry message' to a user.
+    """
     query = update.callback_query
     await query.answer()
 
-    user_id = query.from_user.id
+    # user_id = query.from_user.id
     choice = query.data
     success_message = "You can create notes here: /newnote <title> <content>, edit them: /editnote <note.title> <new_content>, delete them: /deletenote <note.title>, and see the list of all notes: /mynotes."
 
