@@ -63,3 +63,4 @@ def setup_handlers_onstart(app):
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("helloworld", hello_world))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, greet))
+    app.add_handler(CallbackQueryHandler(handle_religion_choice))
