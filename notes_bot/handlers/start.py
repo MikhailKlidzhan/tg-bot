@@ -13,6 +13,25 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Choose your religion:", reply_markup=reply_markup)
 
 
+async def handle_religion_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    user_id = query.from_user.id
+    choice = query.data
+    success_message = "You can create notes here: /newnote <title> <content>, edit them: /editnote <note.title> <new_content>, delete them: /deletenote <note.title>, and see the list of all notes: /mynotes."
+
+
+    if choice == "religion_atheist":
+        await query.edit_message_text(text="Sorry, you must be religious.")
+    elif choice == "religion_christian":
+        context.user_data["religion"] = "christian"
+        await query.edit_message_text(text=success_message)
+    elif choice == "religion_muslim":
+        context.user_data["religion"] = "muslim"
+        await query.edit_message_text(text=success_message)
+
+
 async def hello_world(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id, text="Hello, World!")
 
