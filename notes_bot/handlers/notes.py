@@ -25,7 +25,7 @@ async def my_notes(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("You have no notes yet.")
         return
 
-    response = "📝 Your Notes:\n" + "".join(
+    response = "📝 Your Notes:\n\n" + "\n\n".join(
         f"{note.id}: {note.title} \n{note.content}" for note in notes
     )
     await update.message.reply_text(response)
