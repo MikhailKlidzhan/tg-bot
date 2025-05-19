@@ -1,6 +1,7 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CommandHandler, MessageHandler, filters, ConversationHandler, CallbackQueryHandler
 from models.note import Note
+from api.api import get_bible_verse, get_quran_verse
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -34,11 +35,15 @@ async def get_title(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def get_content(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     title = context.user_data["title"]
+    verse = ""
+    if context.user_data["religion"] == "christian":
+        verse = await get_bible_verse()
+    if context.user_data["religion"] == "muslim":
+        verse = await get_quran_verse()
     content = update.message.text
-
     Note.create(user_id=user_id, title=title, content=content)
 
-    await update.message.reply_text("✅ Note created successfully!")
+    await update.message.reply_text(f"✅ Note created successfully! Here's a verse for you:\n\n{verse}")
     return ConversationHandler.END
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
