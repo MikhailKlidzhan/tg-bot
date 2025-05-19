@@ -1,7 +1,10 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ContextTypes, CommandHandler, MessageHandler, filters, ConversationHandler
+from telegram.ext import ContextTypes, CommandHandler, MessageHandler, filters, ConversationHandler, CallbackQueryHandler
 from models.note import Note
+import logging
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # STATES
 TITLE, CONTENT = range(2)
@@ -9,30 +12,10 @@ TITLE, CONTENT = range(2)
 
 # CREATE: /newnote <title> <content>
 async def new_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    # args = context.args
-
-    # if len(args) < 2:
-    #     await update.message.reply_text("Usage: /new_note <title> <content>")
-    #     return
-    keyboard = [
-        [InlineKeyboardButton("New note", callback_data="create_note")]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("Create a new note:", reply_markup=reply_markup)
+    await update.message.reply_text("Type in a title for your note:")
+    return TITLE
 
 
-    # title, content = args[0], " ".join(args[1:])
-    # Note.create(user_id=user_id, title=title, content=content)
-    # await update.message.reply_text(f"✅ Note saved: '{title}'")
-
-async def handle_create_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-
-    if query.data == "create_note":
-        await query.edit_message_text(text="Enter the title for your note:")
-        return TITLE
 
 async def get_title(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
@@ -40,7 +23,10 @@ async def get_title(update: Update, context: ContextTypes.DEFAULT_TYPE):
     title = context.user_data["title"]
     if Note.get_or_none(user_id=user_id, title=title):
         await update.message.reply_text("Sorry. Note with this title already exists. Use a new title.")
-        return ConversationHandler.END
+        return TITLE
+    if not title.strip():
+        await update.message.reply_text("Ah-oh! Title cannot be an empty string. Enter some characters.")
+        return TITLE
     await update.message.reply_text("Got it! Now enter you note content:")
     return CONTENT
 
@@ -52,7 +38,7 @@ async def get_content(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     Note.create(user_id=user_id, title=title, content=content)
 
-    await update.message.reply_text("Note created successfully!")
+    await update.message.reply_text("✅ Note created successfully!")
     return ConversationHandler.END
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -62,7 +48,9 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # conversation handler for /newnote
 conv_handler = ConversationHandler(
-    entry_points=[CommandHandler("newnote", new_note)],
+    entry_points=[
+        CommandHandler("newnote", new_note),
+    ],
     states={
         TITLE: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_title)],
         CONTENT: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_content)],
@@ -127,8 +115,9 @@ async def delete_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Register handlers
 def setup_handlers(app):
     # app.add_handler(CommandHandler("newnote", new_note))
+    app.add_handler(conv_handler)
     app.add_handler(CommandHandler("mynotes", my_notes))
     app.add_handler(CommandHandler("editnote", edit_note))
     app.add_handler(CommandHandler("deletenote", delete_note))
-    app.add_handler(conv_handler)
+
 
