@@ -34,6 +34,36 @@ async def view_notes(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await send_note_page(update, context)
     return VIEW_NOTE
 
+async def send_note_page(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    notes = context.user_data["notes"]
+    index = context.user_data["current_index"]
+    note = notes[index]
+
+#     build message text
+    text = f"📝 Note {index + 1} of {len(notes)}\n\n"
+    text += f"**Title** {note.title}\n"
+    text += f"**Content** {note.content}"
+
+# inline buttons
+    keyboard = [
+        [
+            InlineKeyboardButton("⬅️ Prev", callback_data="prev"),
+            InlineKeyboardButton("➡️ Next", callback_data="next"),
+        ],
+        [
+            InlineKeyboardButton("✏️ Edit", callback_data="edit"),
+            InlineKeyboardButton("🗑️ Delete", callback_data="delete"),
+        ],
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+#     if a new message
+    if update.message:
+        await update.message.reply_text(text, reply_markup=reply_markup)
+    #     else edit the existing message
+    else:
+        query = update.callback_query
+        await query.edit_message_text(text, reply_markup=reply_markup)
 
 
 
