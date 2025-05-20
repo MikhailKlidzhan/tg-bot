@@ -66,6 +66,41 @@ async def send_note_page(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(text, reply_markup=reply_markup)
 
 
+async def handle_note_navigation(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    notes = context.user_data["notes"]
+    index = context.user_data["current_index"]
+
+    action = query.data
+
+# handle buttons with a note display
+    if action == "prev":
+        if index > 0:
+            context.user_data["current_index"] -= 1
+            await send_note_page(update, context)
+    elif action == "next":
+        if index < len(notes) - 1:
+            context.user_data += 1
+            await send_note_page(update, context)
+    elif action == "edit":
+        await query.edit_message_text("Enter the new content for this note:")
+        return EDIT_NOTE
+    elif action == "delete":
+        note = notes[index]
+        note.delete_instance()
+        del notes[index]
+        context.user_data["notes"] = notes
+        if not notes:
+            await query.edit_message_text("Note deleted. You have no more notes.")
+            return ConversationHandler.END
+        if index >= len(notes):
+            context.user_data["current_index"] = len(notes) - 1
+        await send_note_page(update, context)
+
+    return VIEW_NOTE
+
 
 
 # CREATE: /newnote <title> <content>
