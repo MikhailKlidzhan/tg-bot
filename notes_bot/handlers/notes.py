@@ -7,8 +7,35 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# STATES
+# STATES for Notes
 TITLE, CONTENT = range(2)
+
+# STATES for viewing/editing/deleting notes
+VIEW_NOTE, EDIT_NOTE, DELETE_NOTE = range(3)
+
+# Notes per page
+NOTES_PER_PAGE = 1
+
+
+# viewing notes functionality
+async def view_notes(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    notes = list(Note.select().where(Note.user_id == user_id))
+
+    if not notes:
+        await update.message.reply_text("You have no notes yet.")
+        return ConversationHandler.END
+
+#     save state
+    context.user_data["notes"] = notes
+    context.user_data["current_index"] = 0
+
+#     show first note
+    await send_note_page(update, context)
+    return VIEW_NOTE
+
+
+
 
 
 # CREATE: /newnote <title> <content>
@@ -41,6 +68,7 @@ async def get_content(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.user_data["religion"] == "muslim":
         verse = await get_quran_verse()
     content = update.message.text
+
     Note.create(user_id=user_id, title=title, content=content)
 
     await update.message.reply_text(f"✅ Note created successfully! Here's a verse for you:\n\n{verse}")
@@ -76,7 +104,7 @@ async def my_notes(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     response = "📝 Your Notes:\n\n" + "\n\n".join(
-        f"{note.id}: {note.title} \n{note.content}" for note in notes
+        f"{idx}: {note.title}\n{note.content}" for idx, note in enumerate(notes, start=1)
     )
     await update.message.reply_text(response)
 
@@ -105,12 +133,12 @@ async def edit_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def delete_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if not context.args:
-        await update.message.reply_text("Usage: /deletenote <note_id>")
+        await update.message.reply_text("Usage: /deletenote <note_title>")
         return
 
-    note_id = context.args[0]
+    note_title = context.args[0]
     try:
-        note = Note.get((Note.user_id == user_id) & (Note.id == note_id))
+        note = Note.get((Note.user_id == user_id) & (Note.title == note_title))
         note.delete_instance()
         await update.message.reply_text(f"Deleted note: {note.title}")
     except Note.DoesNotExist:
