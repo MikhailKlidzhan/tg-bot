@@ -101,6 +101,43 @@ async def handle_note_navigation(update: Update, context: ContextTypes.DEFAULT_T
 
     return VIEW_NOTE
 
+async def handle_edit_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    new_content = update.message.text
+    notes = context.user_data["notes"]
+    index = context.user_data["index"]
+    note = notes[index]
+
+    note.content = new_content
+    note.save()
+
+    await update.message.reply_text("✅ Note updated!")
+    return VIEW_NOTE
+
+# canceller for viewing notes
+async def cancel_view_mode(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Exited note viewer.")
+    return ConversationHandler.END
+
+view_conv_handler = ConversationHandler(
+    entry_points=[
+        CommandHandler("viewnotes", view_notes)
+    ],
+    states={
+        VIEW_NOTE: [
+            CallbackQueryHandler(handle_note_navigation),
+        ],
+        EDIT_NOTE: [
+            MessageHandler(filters.TEXT & ~filters.COMMAND, handle_edit_note),
+        ],
+    },
+    fallbacks=[
+        CommandHandler("cancel", cancel_view_mode),
+        CommandHandler("done", cancel_view_mode),
+    ],
+    allow_reentry=True,
+)
+
 
 
 # CREATE: /newnote <title> <content>
@@ -214,6 +251,7 @@ async def delete_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def setup_handlers(app):
     # app.add_handler(CommandHandler("newnote", new_note))
     app.add_handler(conv_handler)
+    app.add_handler(view_conv_handler)
     app.add_handler(CommandHandler("mynotes", my_notes))
     app.add_handler(CommandHandler("editnote", edit_note))
     app.add_handler(CommandHandler("deletenote", delete_note))
