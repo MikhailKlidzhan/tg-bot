@@ -13,7 +13,11 @@ BOT_TOKEN = os.getenv('BOT_TOKEN')
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    level=logging.INFO,
+    handlers=[
+        logging.FileHandler("bot_debug.log"),
+        logging.StreamHandler(),
+    ],
 )
 
 if __name__ == '__main__':

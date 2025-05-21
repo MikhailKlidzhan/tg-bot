@@ -20,7 +20,9 @@ NOTES_PER_PAGE = 1
 # viewing notes functionality
 async def view_notes(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
+    logger.info(f"Starting view_notes for user {user_id}")
     notes = list(Note.select().where(Note.user_id == user_id))
+    logger.info(f"Found {len(notes)} notes for user")
 
     if not notes:
         await update.message.reply_text("You have no notes yet.")
@@ -38,7 +40,7 @@ async def send_note_page(update: Update, context: ContextTypes.DEFAULT_TYPE):
     notes = context.user_data["notes"]
     index = context.user_data["current_index"]
     note = notes[index]
-
+    logger.info(f"Preparing to display note {index + 1}/{len(notes)}")
 #     build message text
     text = f"📝 Note {index + 1} of {len(notes)}\n\n"
     text += f"**Title** {note.title}\n"
@@ -69,9 +71,11 @@ async def send_note_page(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_note_navigation(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
+    logger.info(f"Callback received: {query.data}")
 
     notes = context.user_data["notes"]
     index = context.user_data["current_index"]
+    logger.info(f"Current state - notes: {len(notes)}, index: {index}")
 
     action = query.data
 
@@ -82,7 +86,7 @@ async def handle_note_navigation(update: Update, context: ContextTypes.DEFAULT_T
             await send_note_page(update, context)
     elif action == "next":
         if index < len(notes) - 1:
-            context.user_data += 1
+            context.user_data["current_index"] += 1
             await send_note_page(update, context)
     elif action == "edit":
         await query.edit_message_text("Enter the new content for this note:")
@@ -97,15 +101,15 @@ async def handle_note_navigation(update: Update, context: ContextTypes.DEFAULT_T
             return ConversationHandler.END
         if index >= len(notes):
             context.user_data["current_index"] = len(notes) - 1
-        await send_note_page(update, context)
 
+    await send_note_page(update, context)
     return VIEW_NOTE
 
 async def handle_edit_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     new_content = update.message.text
     notes = context.user_data["notes"]
-    index = context.user_data["index"]
+    index = context.user_data["current_index"]
     note = notes[index]
 
     note.content = new_content
@@ -125,7 +129,7 @@ view_conv_handler = ConversationHandler(
     ],
     states={
         VIEW_NOTE: [
-            CallbackQueryHandler(handle_note_navigation),
+            CallbackQueryHandler(handle_note_navigation, pattern="^(prev|next|edit|delete)$"),
         ],
         EDIT_NOTE: [
             MessageHandler(filters.TEXT & ~filters.COMMAND, handle_edit_note),
@@ -137,6 +141,7 @@ view_conv_handler = ConversationHandler(
     ],
     allow_reentry=True,
 )
+logger.info("View notes conversation handler initialized")
 
 
 
@@ -245,6 +250,7 @@ async def delete_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"Deleted note: {note.title}")
     except Note.DoesNotExist:
         await update.message.reply_text("Note not found or not yours. Oops.")
+
 
 
 # Register handlers
