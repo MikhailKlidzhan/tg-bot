@@ -202,18 +202,18 @@ conv_handler = ConversationHandler(
 
 
 # READ: /mynotes
-async def my_notes(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    notes = Note.select().where(Note.user_id == user_id)
-
-    if not notes:
-        await update.message.reply_text("You have no notes yet.")
-        return
-
-    response = "📝 Your Notes:\n\n" + "\n\n".join(
-        f"{idx}: {note.title}\n{note.content}" for idx, note in enumerate(notes, start=1)
-    )
-    await update.message.reply_text(response)
+# async def my_notes(update: Update, context: ContextTypes.DEFAULT_TYPE):
+#     user_id = update.effective_user.id
+#     notes = Note.select().where(Note.user_id == user_id)
+#
+#     if not notes:
+#         await update.message.reply_text("You have no notes yet.")
+#         return
+#
+#     response = "📝 Your Notes:\n\n" + "\n\n".join(
+#         f"{idx}: {note.title}\n{note.content}" for idx, note in enumerate(notes, start=1)
+#     )
+#     await update.message.reply_text(response)
 
 
 # UPDATE: /editnote <id> <new_content>

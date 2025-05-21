@@ -61,9 +61,9 @@ async def post_init(app):
         BotCommand("helloworld", "Hello world!"),
         BotCommand("newnote", "Create a new note"),
         BotCommand("viewnotes", "View and edit your notes"),
-        BotCommand("mynotes", "Show your notes"),
-        BotCommand("editnote", "Edit your notes by id"),
-        BotCommand("deletenote", "Delete your notes by id"),
+        # BotCommand("mynotes", "Show your notes"),
+        # BotCommand("editnote", "Edit your notes by id"),
+        # BotCommand("deletenote", "Delete your notes by id"),
 
     ]
     await app.bot.set_my_commands(commands)
