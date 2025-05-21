@@ -8,7 +8,7 @@ from handlers.start import setup_handlers_onstart, post_init
 from handlers.notes import setup_handlers
 
 load_dotenv()
-BOT_TOKEN = os.getenv('BOT_TOKEN')
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 logger.remove()
 
@@ -36,11 +36,10 @@ logger.add(
     level="ERROR",
 )
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = ApplicationBuilder().token(BOT_TOKEN).post_init(post_init).build()
 
     setup_handlers_onstart(app)
     setup_handlers(app)
-
 
     app.run_polling()

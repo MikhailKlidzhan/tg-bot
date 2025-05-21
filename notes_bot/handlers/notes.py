@@ -1,5 +1,12 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ContextTypes, CommandHandler, MessageHandler, filters, ConversationHandler, CallbackQueryHandler
+from telegram.ext import (
+    ContextTypes,
+    CommandHandler,
+    MessageHandler,
+    filters,
+    ConversationHandler,
+    CallbackQueryHandler,
+)
 from models.note import Note
 from api.api import get_bible_verse, get_quran_verse
 import logging
@@ -28,25 +35,26 @@ async def view_notes(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("You have no notes yet.")
         return ConversationHandler.END
 
-#     save state
+    #     save state
     context.user_data["notes"] = notes
     context.user_data["current_index"] = 0
 
-#     show first note
+    #     show first note
     await send_note_page(update, context)
     return VIEW_NOTE
+
 
 async def send_note_page(update: Update, context: ContextTypes.DEFAULT_TYPE):
     notes = context.user_data["notes"]
     index = context.user_data["current_index"]
     note = notes[index]
     logger.info(f"Preparing to display note {index + 1}/{len(notes)}")
-#     build message text
+    #     build message text
     text = f"📝 Note {index + 1} of {len(notes)}\n\n"
     text += f"**Title** {note.title}\n"
     text += f"**Content** {note.content}"
 
-# inline buttons
+    # inline buttons
     keyboard = [
         [
             InlineKeyboardButton("⬅️ Prev", callback_data="prev"),
@@ -59,7 +67,7 @@ async def send_note_page(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-#     if a new message
+    #     if a new message
     if update.message:
         await update.message.reply_text(text, reply_markup=reply_markup)
     #     else edit the existing message
@@ -79,7 +87,7 @@ async def handle_note_navigation(update: Update, context: ContextTypes.DEFAULT_T
 
     action = query.data
 
-# handle buttons with a note display
+    # handle buttons with a note display
     if action == "prev":
         if index > 0:
             context.user_data["current_index"] -= 1
@@ -105,6 +113,7 @@ async def handle_note_navigation(update: Update, context: ContextTypes.DEFAULT_T
     await send_note_page(update, context)
     return VIEW_NOTE
 
+
 async def handle_edit_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     new_content = update.message.text
@@ -118,18 +127,20 @@ async def handle_edit_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("✅ Note updated!")
     return VIEW_NOTE
 
+
 # canceller for viewing notes
 async def cancel_view_mode(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Exited note viewer.")
     return ConversationHandler.END
 
+
 view_conv_handler = ConversationHandler(
-    entry_points=[
-        CommandHandler("viewnotes", view_notes)
-    ],
+    entry_points=[CommandHandler("viewnotes", view_notes)],
     states={
         VIEW_NOTE: [
-            CallbackQueryHandler(handle_note_navigation, pattern="^(prev|next|edit|delete)$"),
+            CallbackQueryHandler(
+                handle_note_navigation, pattern="^(prev|next|edit|delete)$"
+            ),
         ],
         EDIT_NOTE: [
             MessageHandler(filters.TEXT & ~filters.COMMAND, handle_edit_note),
@@ -144,12 +155,10 @@ view_conv_handler = ConversationHandler(
 logger.info("View notes conversation handler initialized")
 
 
-
 # CREATE: /newnote <title> <content>
 async def new_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Type in a title for your note:")
     return TITLE
-
 
 
 async def get_title(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -157,10 +166,14 @@ async def get_title(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["title"] = update.message.text
     title = context.user_data["title"]
     if Note.get_or_none(user_id=user_id, title=title):
-        await update.message.reply_text("Sorry. Note with this title already exists. Use a new title.")
+        await update.message.reply_text(
+            "Sorry. Note with this title already exists. Use a new title."
+        )
         return TITLE
     if not title.strip():
-        await update.message.reply_text("Ah-oh! Title cannot be an empty string. Enter some characters.")
+        await update.message.reply_text(
+            "Ah-oh! Title cannot be an empty string. Enter some characters."
+        )
         return TITLE
     await update.message.reply_text("Got it! Now enter you note content:")
     return CONTENT
@@ -178,8 +191,11 @@ async def get_content(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     Note.create(user_id=user_id, title=title, content=content)
 
-    await update.message.reply_text(f"✅ Note created successfully! Here's a verse for you:\n\n{verse}")
+    await update.message.reply_text(
+        f"✅ Note created successfully! Here's a verse for you:\n\n{verse}"
+    )
     return ConversationHandler.END
+
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Note creation cancelled.")
@@ -197,8 +213,6 @@ conv_handler = ConversationHandler(
     },
     fallbacks=[CommandHandler("cancel", cancel)],
 )
-
-
 
 
 # READ: /mynotes
@@ -252,7 +266,6 @@ async def delete_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Note not found or not yours. Oops.")
 
 
-
 # Register handlers
 def setup_handlers(app):
     # app.add_handler(CommandHandler("newnote", new_note))
@@ -261,5 +274,3 @@ def setup_handlers(app):
     app.add_handler(CommandHandler("mynotes", my_notes))
     app.add_handler(CommandHandler("editnote", edit_note))
     app.add_handler(CommandHandler("deletenote", delete_note))
-
-
