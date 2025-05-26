@@ -3,6 +3,7 @@ from loguru import logger
 
 
 async def get_bible_verse():
+    """Fetches API to get a random verse from the Bible"""
     logger.debug(f"Fetching for a bible verse.")
     async with httpx.AsyncClient() as client:
         try:
@@ -16,6 +17,7 @@ async def get_bible_verse():
 
 
 async def get_quran_verse():
+    """Fetches API to get a random ayah from Quran"""
     logger.debug(f"Fetching for a quran ayah.")
     async with httpx.AsyncClient() as client:
         try:

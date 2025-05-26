@@ -2,8 +2,6 @@ from telegram import Update, BotCommand, InlineKeyboardButton, InlineKeyboardMar
 from telegram.ext import (
     ContextTypes,
     CommandHandler,
-    MessageHandler,
-    filters,
     CallbackQueryHandler,
 )
 from loguru import logger
@@ -14,7 +12,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     Starts the bot, gives a user choice of religion.
     Based on the choice certain passages will be attached to the notes.
     """
-    # await context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a BibleNotes bot!")
     if "religion" in context.user_data:
         await update.message.reply_text(
             f"You chose your religion, it's '{context.user_data['religion'].capitalize()}'. Choose other commands from the menu."
@@ -62,13 +59,8 @@ async def handle_religion_choice(update: Update, context: ContextTypes.DEFAULT_T
         await query.edit_message_text(text=success_message)
 
 
-async def hello_world(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(
-        chat_id=update.effective_chat.id, text="Hello, World!"
-    )
-
-
 async def post_init(app):
+    """Initializes available commands for the bots"""
     commands = [
         BotCommand("start", "Start the bot"),
         BotCommand("newnote", "Create a new note"),
@@ -78,5 +70,6 @@ async def post_init(app):
 
 
 def setup_handlers_onstart(app):
+    """Adds handlers to the app upon the start command"""
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(handle_religion_choice, pattern="^religion_"))

@@ -23,6 +23,7 @@ NOTES_PER_PAGE = 1
 
 # viewing notes functionality
 async def view_notes(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handles viewing of notes. Triggers conversation for displaying notes and their further editing/deleting with inline buttons"""
     user_id = update.effective_user.id
     logger.info(f"Starting view_notes for user: {user_id}")
     notes = list(Note.select().where(Note.user_id == user_id))
@@ -32,21 +33,22 @@ async def view_notes(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("You have no notes yet.")
         return ConversationHandler.END
 
-    #     save state
+    # save state
     context.user_data["notes"] = notes
     context.user_data["current_index"] = 0
 
-    #     show first note
+    # show first note
     await send_note_page(update, context)
     return VIEW_NOTE
 
 
 async def send_note_page(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Displays users' notes with inline buttons for pagination and editing/deleting"""
     notes = context.user_data["notes"]
     index = context.user_data["current_index"]
     note = notes[index]
     logger.info(f"Preparing to display note {index + 1}/{len(notes)}")
-    #     build message text
+    # build message text
     text = f"📝 Note {index + 1} of {len(notes)}\n\n"
     text += f"Title: {note.title}\n"
     text += f"Content: {note.content}"
@@ -64,16 +66,22 @@ async def send_note_page(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    #     if a new message
+    # if a new message
     if update.message:
         await update.message.reply_text(text, reply_markup=reply_markup)
-    #     else edit the existing message
+    # else edit the existing message
     else:
         query = update.callback_query
         await query.edit_message_text(text, reply_markup=reply_markup)
 
 
 async def handle_note_navigation(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handles button presses when viewing notes.
+    prev - previous note
+    next - next note
+    edit - edit the content of the note
+    delete - delete the note
+    """
     query = update.callback_query
     await query.answer()
     logger.info(f"Callback received: {query.data}")
@@ -118,6 +126,7 @@ async def handle_note_navigation(update: Update, context: ContextTypes.DEFAULT_T
 
 
 async def handle_edit_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handles the process of editing the note"""
     new_content = update.message.text
     notes = context.user_data["notes"]
     index = context.user_data["current_index"]
@@ -132,6 +141,7 @@ async def handle_edit_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # canceller for viewing notes
 async def cancel_view_mode(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Cancels/stops the conversation for note viewing"""
     await update.message.reply_text("Exited note viewer.")
     return ConversationHandler.END
 
@@ -159,11 +169,13 @@ logger.info("View notes conversation handler initialized")
 
 # CREATE: /newnote
 async def new_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Initializes the note creation conversation"""
     await update.message.reply_text("Type in a title for your note:")
     return TITLE
 
 
 async def get_title(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handles the logic for getting the title of the note"""
     user_id = update.effective_user.id
     context.user_data["title"] = update.message.text
     logger.info(f"User: {user_id} entered a title for a note.")
@@ -183,6 +195,7 @@ async def get_title(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def get_content(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handles the logic for getting the content of the note"""
     user_id = update.effective_user.id
     title = context.user_data["title"]
     verse = ""
@@ -202,6 +215,7 @@ async def get_content(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Cancels/stops note creation"""
     await update.message.reply_text("Note creation cancelled.")
     return ConversationHandler.END
 
@@ -221,5 +235,6 @@ conv_handler = ConversationHandler(
 
 # Register handlers
 def setup_handlers(app):
+    """Adds handlers to the app for interaction with notes"""
     app.add_handler(conv_handler)
     app.add_handler(view_conv_handler)

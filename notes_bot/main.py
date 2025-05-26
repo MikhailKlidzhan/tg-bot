@@ -38,8 +38,9 @@ logger.add(
 
 if __name__ == "__main__":
     app = ApplicationBuilder().token(BOT_TOKEN).post_init(post_init).build()
-
+    logger.info("Bot started successfully...")
     setup_handlers_onstart(app)
     setup_handlers(app)
 
     app.run_polling()
+    logger.info("Bot terminated.")
