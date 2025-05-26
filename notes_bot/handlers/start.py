@@ -6,10 +6,7 @@ from telegram.ext import (
     filters,
     CallbackQueryHandler,
 )
-import logging
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -50,9 +47,10 @@ async def handle_religion_choice(update: Update, context: ContextTypes.DEFAULT_T
     query = update.callback_query
     await query.answer()
     logger.info(f"Callback received: {query.data}")
-    # user_id = query.from_user.id
     choice = query.data
-    success_message = "You can create notes here: /newnote <title> <content>, edit them: /editnote <note.title> <new_content>, delete them: /deletenote <note.title>, and see the list of all notes: /mynotes."
+    success_message = (
+        "You can create notes here: /newnote.\nView, edit and delete them: /viewnotes."
+    )
 
     if choice == "religion_atheist":
         await query.edit_message_text(text="Sorry, you must be religious.")
@@ -73,17 +71,12 @@ async def hello_world(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def post_init(app):
     commands = [
         BotCommand("start", "Start the bot"),
-        BotCommand("helloworld", "Hello world!"),
         BotCommand("newnote", "Create a new note"),
-        BotCommand("viewnotes", "View and edit your notes"),
-        # BotCommand("mynotes", "Show your notes"),
-        # BotCommand("editnote", "Edit your notes by id"),
-        # BotCommand("deletenote", "Delete your notes by id"),
+        BotCommand("viewnotes", "View, edit or delete your notes"),
     ]
     await app.bot.set_my_commands(commands)
 
 
 def setup_handlers_onstart(app):
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("helloworld", hello_world))
     app.add_handler(CallbackQueryHandler(handle_religion_choice, pattern="^religion_"))

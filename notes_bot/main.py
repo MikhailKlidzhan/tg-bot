@@ -23,7 +23,7 @@ logger.add(
     rotation="1 day",
     retention="7 days",
     compression="zip",
-    format="{time:YYYY-MM-DD HH:mm:ss} | {level <8} | {name}:{function}:{line} - {message}",
+    format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} - {message}",
     level="INFO",
 )
 
@@ -32,7 +32,7 @@ logger.add(
     rotation="1 day",
     retention="30 days",
     compression="zip",
-    format="{time:YYYY-MM-DD HH:mm:ss} | {level <8} | {name}:{function}:{line} - {message}",
+    format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} - {message}",
     level="ERROR",
 )
 

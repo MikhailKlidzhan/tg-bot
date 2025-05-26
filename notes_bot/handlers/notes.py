@@ -9,10 +9,7 @@ from telegram.ext import (
 )
 from models.note import Note
 from api.api import get_bible_verse, get_quran_verse
-import logging
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 # STATES for Notes
 TITLE, CONTENT = range(2)
@@ -27,9 +24,9 @@ NOTES_PER_PAGE = 1
 # viewing notes functionality
 async def view_notes(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    logger.info(f"Starting view_notes for user {user_id}")
+    logger.info(f"Starting view_notes for user: {user_id}")
     notes = list(Note.select().where(Note.user_id == user_id))
-    logger.info(f"Found {len(notes)} notes for user")
+    logger.info(f"Found {len(notes)} notes for user: {user_id}")
 
     if not notes:
         await update.message.reply_text("You have no notes yet.")
@@ -51,8 +48,8 @@ async def send_note_page(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.info(f"Preparing to display note {index + 1}/{len(notes)}")
     #     build message text
     text = f"📝 Note {index + 1} of {len(notes)}\n\n"
-    text += f"**Title** {note.title}\n"
-    text += f"**Content** {note.content}"
+    text += f"Title: {note.title}\n"
+    text += f"Content: {note.content}"
 
     # inline buttons
     keyboard = [
@@ -81,6 +78,8 @@ async def handle_note_navigation(update: Update, context: ContextTypes.DEFAULT_T
     await query.answer()
     logger.info(f"Callback received: {query.data}")
 
+    user = query.from_user
+
     notes = context.user_data["notes"]
     index = context.user_data["current_index"]
     logger.info(f"Current state - notes: {len(notes)}, index: {index}")
@@ -89,17 +88,21 @@ async def handle_note_navigation(update: Update, context: ContextTypes.DEFAULT_T
 
     # handle buttons with a note display
     if action == "prev":
+        logger.info(f"User: {user} clicked 'prev' button.")
         if index > 0:
             context.user_data["current_index"] -= 1
             await send_note_page(update, context)
     elif action == "next":
+        logger.info(f"User: {user} clicked 'next' button.")
         if index < len(notes) - 1:
             context.user_data["current_index"] += 1
             await send_note_page(update, context)
     elif action == "edit":
+        logger.info(f"User: {user} clicked 'edit' button.")
         await query.edit_message_text("Enter the new content for this note:")
         return EDIT_NOTE
     elif action == "delete":
+        logger.info(f"User: {user} clicked 'delete' button.")
         note = notes[index]
         note.delete_instance()
         del notes[index]
@@ -115,7 +118,6 @@ async def handle_note_navigation(update: Update, context: ContextTypes.DEFAULT_T
 
 
 async def handle_edit_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
     new_content = update.message.text
     notes = context.user_data["notes"]
     index = context.user_data["current_index"]
@@ -155,7 +157,7 @@ view_conv_handler = ConversationHandler(
 logger.info("View notes conversation handler initialized")
 
 
-# CREATE: /newnote <title> <content>
+# CREATE: /newnote
 async def new_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Type in a title for your note:")
     return TITLE
@@ -164,6 +166,7 @@ async def new_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def get_title(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     context.user_data["title"] = update.message.text
+    logger.info(f"User: {user_id} entered a title for a note.")
     title = context.user_data["title"]
     if Note.get_or_none(user_id=user_id, title=title):
         await update.message.reply_text(
@@ -188,6 +191,7 @@ async def get_content(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.user_data["religion"] == "muslim":
         verse = await get_quran_verse()
     content = update.message.text
+    logger.info(f"User: {user_id} entered content for a note.")
 
     Note.create(user_id=user_id, title=title, content=content)
 
@@ -215,62 +219,7 @@ conv_handler = ConversationHandler(
 )
 
 
-# READ: /mynotes
-# async def my_notes(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#     user_id = update.effective_user.id
-#     notes = Note.select().where(Note.user_id == user_id)
-#
-#     if not notes:
-#         await update.message.reply_text("You have no notes yet.")
-#         return
-#
-#     response = "📝 Your Notes:\n\n" + "\n\n".join(
-#         f"{idx}: {note.title}\n{note.content}" for idx, note in enumerate(notes, start=1)
-#     )
-#     await update.message.reply_text(response)
-
-
-# UPDATE: /editnote <id> <new_content>
-async def edit_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    args = context.args
-
-    if len(args) < 2:
-        await update.message.reply_text("Usage: /editnote <note_id> <new_content>")
-        return
-
-    note_id, new_content = args[0], " ".join(args[1:])
-
-    try:
-        note = Note.get((Note.user_id == user_id) & (Note.id == note_id))
-        note.content = new_content
-        note.save()
-        await update.message.reply_text(f"Updated note {note.title}")
-    except Note.DoesNotExist:
-        await update.message.reply_text("Note not found or not yours. Oops.")
-
-
-# DELETE: /deletenote <id>
-async def delete_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    if not context.args:
-        await update.message.reply_text("Usage: /deletenote <note_title>")
-        return
-
-    note_title = context.args[0]
-    try:
-        note = Note.get((Note.user_id == user_id) & (Note.title == note_title))
-        note.delete_instance()
-        await update.message.reply_text(f"Deleted note: {note.title}")
-    except Note.DoesNotExist:
-        await update.message.reply_text("Note not found or not yours. Oops.")
-
-
 # Register handlers
 def setup_handlers(app):
-    # app.add_handler(CommandHandler("newnote", new_note))
     app.add_handler(conv_handler)
     app.add_handler(view_conv_handler)
-    app.add_handler(CommandHandler("mynotes", my_notes))
-    app.add_handler(CommandHandler("editnote", edit_note))
-    app.add_handler(CommandHandler("deletenote", delete_note))
